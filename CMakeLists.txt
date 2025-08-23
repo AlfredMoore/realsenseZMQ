@@ -49,17 +49,17 @@ if(NOT ZMQ_FOUND)
 endif()
 
 # ---- 目标 ----
-add_executable(photo_slam_realsense_client
+add_executable(rs_zmq_publisher
   main.cpp     # 把你的源文件名改成实际文件名
 )
 
-target_include_directories(photo_slam_realsense_client
+target_include_directories(rs_zmq_publisher
   PRIVATE
     ${OpenCV_INCLUDE_DIRS}
     ${ZMQ_INCLUDE_DIRS}
 )
 
-target_link_libraries(photo_slam_realsense_client
+target_link_libraries(rs_zmq_publisher
   PRIVATE
     realsense2::realsense2
     ${OpenCV_LIBS}
@@ -68,11 +68,11 @@ target_link_libraries(photo_slam_realsense_client
 
 # Linux 上通常需要 pthread（ZeroMQ/RealSense 常见）
 if(UNIX AND NOT APPLE)
-  target_link_libraries(photo_slam_realsense_client PRIVATE pthread)
+  target_link_libraries(rs_zmq_publisher PRIVATE pthread)
 endif()
 
 # 可选：更易于调试的定义
-target_compile_definitions(photo_slam_realsense_client PRIVATE
+target_compile_definitions(rs_zmq_publisher PRIVATE
   $<$<CONFIG:Debug>:DEBUG>
 )
 
