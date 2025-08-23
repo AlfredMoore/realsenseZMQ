@@ -13,6 +13,6 @@ make
 Compile
 
 ```bash
-./
+./rs_zmq_publisher
 ```
 
