@@ -57,7 +57,7 @@ int main() {
     argparse::ArgumentParser program("REALSENSE_ZMQ_CLIENT");
     program.add_argument("--serial")
         .help("Specify the serial number of the RealSense device")
-        .default_value(std::string("...")); // TODO: no hardcoding
+        .required();
 
     try {
         program.parse_args();
