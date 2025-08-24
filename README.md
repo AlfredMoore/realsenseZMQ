@@ -8,11 +8,13 @@ The ROS based Image Communication is too slow and requires higher bandwidth.
 ```bash
 mkdir build && cd build
 cmake ..
-make
+cmake --build . -j 16   # make -j16
 ```
 Compile
 
 ```bash
-./rs_zmq_publisher
+./rs_zmq_publisher --serial <RealsenseSerial>
 ```
 
+## Integrate in ROS2
+[Example](https://github.com/AlfredMoore/stretch_ros2/tree/humble/external_dev)
