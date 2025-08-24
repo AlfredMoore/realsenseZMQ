@@ -20,6 +20,7 @@
 #include <opencv2/core/core.hpp>
 #include <zmq.hpp>
 #include <chrono>
+#include <argparse/argparse.hpp>
 
 std::atomic<bool> terminate_program(false);
 
@@ -52,11 +53,27 @@ static void get_sensor_option(const rs2::sensor& sensor)
 
 int main() {
     std::signal(SIGINT, signal_handler);
+    // --- argparse ---
+    argparse::ArgumentParser program("REALSENSE_ZMQ_CLIENT");
+    program.add_argument("--serial")
+        .help("Specify the serial number of the RealSense device")
+        .default_value(std::string("...")); // TODO: no hardcoding
+
+    try {
+        program.parse_args();
+    } catch (const std::runtime_error& err) {
+        std::cerr << "Error: " << err.what() << std::endl;
+        return 1;
+    }
+
+    std::string desired_serial = program.get<std::string>("--serial");
+    std::cout << "Using RealSense device with serial: " << desired_serial << std::endl;
+
     // --- ZeroMQ Publisher Setup ---
     zmq::context_t context(1);
     zmq::socket_t socket(context, ZMQ_PUB);
     try {
-        socket.bind("tcp://*:5555");       // TODO: specify the IP address
+        socket.bind("tcp://*:5555");       // TODO: no hardcoding
         std::cout << "ZMQ Publisher listening on tcp://*:5555" << std::endl;
     } catch (const zmq::error_t& e) {
         std::cerr << "ZMQ Error: Could not bind socket. " << e.what() << std::endl;
@@ -73,8 +90,6 @@ int main() {
         std::cerr << "No device connected, please connect a RealSense device." << std::endl;
         return 1;
     }
-
-    std::string desired_serial = "..."; // Refer to rs_serial.txt (ignored by git)
 
     for (rs2::device device : devices) {
         std::cout << "Found RealSense device: " 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(PhotoSLAM_RSClient LANGUAGES CXX)
+project(REALSENSE_ZMQ_CLIENT LANGUAGES CXX)
 
 # ---- C++ 标准与编译选项 ----
 set(CMAKE_CXX_STANDARD 17)
@@ -14,6 +14,14 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
+
+# fetch latest argparse
+include(FetchContent)
+FetchContent_Declare(
+    argparse
+    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+)
+FetchContent_MakeAvailable(argparse)
 
 # ---- 依赖：RealSense2 ----
 find_package(realsense2 REQUIRED)  # 提供 target: realsense2::realsense2
@@ -64,6 +72,7 @@ target_link_libraries(rs_zmq_publisher
     realsense2::realsense2
     ${OpenCV_LIBS}
     ${ZMQ_LIBRARIES}
+    argparse
 )
 
 # Linux 上通常需要 pthread（ZeroMQ/RealSense 常见）
