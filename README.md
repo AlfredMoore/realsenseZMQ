@@ -15,6 +15,12 @@ Compile
 ```bash
 ./rs_zmq_publisher --serial <RealsenseSerial>
 ```
+Run
+
+```bash
+./rs_zmq_publisher --serial <RealsenseSerial> --show
+```
+Run and show in local screen.
 
 ## Integrate in ROS2
 [Example](https://github.com/AlfredMoore/stretch_ros2/tree/humble/external_dev)

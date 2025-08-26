@@ -51,16 +51,21 @@ static void get_sensor_option(const rs2::sensor& sensor)
     }
 }
 
-int main() {
+int main(int argc, char** argv) {
     std::signal(SIGINT, signal_handler);
     // --- argparse ---
     argparse::ArgumentParser program("REALSENSE_ZMQ_CLIENT");
     program.add_argument("--serial")
         .help("Specify the serial number of the RealSense device")
-        .required();
+        .default_value("000000000000");
+
+    program.add_argument("--show")
+        .help("Show images for debugging")
+        .default_value(false)
+        .implicit_value(true);
 
     try {
-        program.parse_args();
+        program.parse_args(argc, argv);
     } catch (const std::runtime_error& err) {
         std::cerr << "Error: " << err.what() << std::endl;
         return 1;
@@ -68,6 +73,9 @@ int main() {
 
     std::string desired_serial = program.get<std::string>("--serial");
     std::cout << "Using RealSense device with serial: " << desired_serial << std::endl;
+
+    bool show_images = program.get<bool>("--show");
+    std::cout << "Show images: " << show_images << std::endl;
 
     // --- ZeroMQ Publisher Setup ---
     zmq::context_t context(1);
@@ -91,8 +99,9 @@ int main() {
         return 1;
     }
 
+    std::cout << "##########\nPlease record serial number of your desired device." << std::endl;
     for (rs2::device device : devices) {
-        std::cout << "Found RealSense device: " 
+        std::cout << "Found RealSense device:" 
                   << device.get_info(RS2_CAMERA_INFO_NAME) 
                   << " | Serial: " << device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER)
                   << " | USB Port: " << device.get_info(RS2_CAMERA_INFO_PHYSICAL_PORT)
@@ -102,6 +111,7 @@ int main() {
             device_found = true;
         }
     }
+    std::cout << "##########" << std::endl;
 
     if (!device_found) {
         std::cerr << "Desired RealSense device not found. Please check the serial and USB port." << std::endl;
@@ -130,9 +140,15 @@ int main() {
             get_sensor_option(sensor);
             if (index == 2) // RGB camera
             {
+                // Fixed Exposure
                 // sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
                 sensor.set_option(RS2_OPTION_EXPOSURE, 150);
                 sensor.set_option(RS2_OPTION_GAIN, 64);
+
+                // // Auto Exposure
+                // sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 1);
+                // // sensor.set_option(RS2_OPTION_EXPOSURE, 150);
+                // // sensor.set_option(RS2_OPTION_GAIN, 64);
             }
 
             if (index == 3)
@@ -163,8 +179,10 @@ int main() {
 
         rs2::video_frame color_frame = aligned_frames.get_color_frame();
         rs2::depth_frame depth_frame = aligned_frames.get_depth_frame();
-
+        
         if (!color_frame || !depth_frame) continue;
+
+        double timestamp = color_frame.get_timestamp(); // Use frame timestamp
 
         // --- Create OpenCV Mats ---
         cv::Mat color_rgb(cv::Size(1280, 720), CV_8UC3, (void*)color_frame.get_data(), cv::Mat::AUTO_STEP);
@@ -178,19 +196,27 @@ int main() {
         cv::imencode(".png", depth, depth_buffer, {cv::IMWRITE_PNG_COMPRESSION, 1});
         //cv::imencode(".png", depth, depth_buffer); // PNG for lossless 16-bit depth
 
+        std::string timestamp_str = std::to_string(timestamp);
+
         // Send as a multi-part message: [RGB, Depth, Timestamp]
         socket.send(zmq::buffer(rgb_buffer), zmq::send_flags::sndmore);
         socket.send(zmq::buffer(depth_buffer), zmq::send_flags::sndmore);
         socket.send(zmq::buffer(timestamp_str), zmq::send_flags::none);
 
         // Optional: display images on client side for verification
-        // cv::Mat color_bgr;
-        // cv::cvtColor(color_rgb, color_bgr, cv::COLOR_RGB2BGR);
-        cv::imshow("Client - BGR", color_rgb);
-        cv::imshow("Client - Depth", depth * 15); // Scale for visualization
-        if (cv::waitKey(1) == 27) { // ESC key to exit
-            terminate_program = true;
+        if (show_images) {
+            cv::Mat color_bgr;
+            cv::cvtColor(color_rgb, color_bgr, cv::COLOR_RGB2BGR);
+            cv::imshow("Client - RGB (Converted to BGR for Display)", color_bgr);
+            // cv::imshow("Client - Depth", depth * 15); // Scale for visualization
+            if (cv::waitKey(1) == 27) { // ESC key to exit
+                terminate_program = true;
+            }
         }
+        else {
+            std::cout << "Show images: " << show_images << std::endl;
+        }
+
     }
 
     std::cout << "Client shutting down..." << std::endl;
