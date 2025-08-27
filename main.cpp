@@ -170,6 +170,9 @@ int main(int argc, char** argv) {
     rs2::align align_to_color(RS2_STREAM_COLOR);
 
     std::cout << "RealSense camera started and streams are configured." << std::endl;
+    if (!show_images) {
+        std::cout << "Not showing images" << std::endl;
+    }
 
     while (!terminate_program) {
         rs2::frameset frames = pipe.wait_for_frames();
@@ -212,9 +215,6 @@ int main(int argc, char** argv) {
             if (cv::waitKey(1) == 27) { // ESC key to exit
                 terminate_program = true;
             }
-        }
-        else {
-            std::cout << "Show images: " << show_images << std::endl;
         }
 
     }
