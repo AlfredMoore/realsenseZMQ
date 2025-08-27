@@ -2,7 +2,9 @@
 
 This repo is built to send RealSense frames through ZMQ.
 
-The ROS based Image Communication is too slow and requires higher bandwidth.
+The ROS based Image Communication is too slow and requires higher bandwidth. Default using `tcp://*:5555`.
+
+This is only the image publisher on robot. The ZeroMQ subscriber should run on XR device or other computational device.
 
 ## How to use
 ```bash
@@ -13,9 +15,14 @@ cmake --build . -j 16   # make -j16
 Compile
 
 ```bash
+./rs_zmq_publisher
+```
+Raw scan Realsense camera. You can get your Realsense serial here.
+
+```bash
 ./rs_zmq_publisher --serial <RealsenseSerial>
 ```
-Run
+Run with your desired serial number.
 
 ```bash
 ./rs_zmq_publisher --serial <RealsenseSerial> --show
